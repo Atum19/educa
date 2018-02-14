@@ -19,6 +19,7 @@ from braces.views import (
     # PermissionRequiredMixin,
 )
 from .forms import ModuleFormSet
+from students.forms import CourseEnrollForm
 from .models import Course, Module, Content, Subject
 
 
@@ -228,7 +229,7 @@ class CourseDetailView(DetailView):
     model = Course
     template_name = 'courses/course/detail.html'
 
-    # def get_context_data(self, **kwargs):
-    #     context = super(CourseDetailView, self).get_context_data(**kwargs)
-    #     context['enroll_form'] = CourseEnrollForm(initial={'course':self.object})
-    #     return context
+    def get_context_data(self, **kwargs):
+        context = super(CourseDetailView, self).get_context_data(**kwargs)
+        context['enroll_form'] = CourseEnrollForm(initial={'course':self.object})
+        return context
