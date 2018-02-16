@@ -5,22 +5,14 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.forms.models import modelform_factory
+from django.db.models import Count
 from django.apps import apps
 from django.core.cache import cache
-from django.db.models import Count
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin
-)
-from braces.views import (
-    CsrfExemptMixin,
-    JsonRequestResponseMixin
-    # LoginRequiredMixin,
-    # PermissionRequiredMixin,
-)
-from .forms import ModuleFormSet
+from braces.views import LoginRequiredMixin, PermissionRequiredMixin, \
+                         CsrfExemptMixin, JsonRequestResponseMixin
 from students.forms import CourseEnrollForm
-from .models import Course, Module, Content, Subject
+from .models import Subject, Course, Module, Content
+from .forms import ModuleFormSet
 
 
 class OwnerMixin(object):
@@ -35,8 +27,7 @@ class OwnerEditMixin(object):
         return super(OwnerEditMixin, self).form_valid(form)
 
 
-# class OwnerCourseMixin(OwnerMixin, LoginRequiredMixin):
-class OwnerCourseMixin(OwnerMixin):
+class OwnerCourseMixin(OwnerMixin, LoginRequiredMixin):
     model = Course
 
 
@@ -46,8 +37,8 @@ class OwnerCourseEditMixin(OwnerCourseMixin, OwnerEditMixin):
     template_name = 'courses/manage/course/form.html'
 
 
-# class ManageCourseListView(OwnerCourseMixin, ListView):
-#     template_name = 'courses/manage/course/list.html'
+class ManageCourseListView(OwnerCourseMixin, ListView):
+    template_name = 'courses/manage/course/list.html'
 
 
 class CourseCreateView(PermissionRequiredMixin,
@@ -68,15 +59,6 @@ class CourseDeleteView(PermissionRequiredMixin,
     success_url = reverse_lazy('manage_course_list')
     template_name = 'courses/manage/course/delete.html'
     permission_required = 'courses.delete_course'
-
-
-class ManageCourseListView(ListView):
-    model = Course
-    template_name = 'courses/manage/course/list.html'
-
-    def get_queryset(self):
-        qs = super(ManageCourseListView, self).get_queryset()
-        return qs.filter(owner=self.request.user)
 
 
 class CourseModuleUpdateView(TemplateResponseMixin, View):
@@ -118,7 +100,7 @@ class ContentCreateUpdateView(TemplateResponseMixin, View):
 
     def get_form(self, model, *args, **kwargs):
         Form = modelform_factory(model,
-               exclude=['owner', 'order', 'created', 'updated'])
+                                 exclude=['owner', 'order', 'created', 'updated'])
         return Form(*args, **kwargs)
 
     def dispatch(self, request, module_id, model_name, id=None):
